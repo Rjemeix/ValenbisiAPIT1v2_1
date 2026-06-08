@@ -1,7 +1,5 @@
 package es.gva.edu.iesjuandegaray.bicis;
 
-import java.io.IOException;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -11,53 +9,68 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.IOException;
+
 public class ValenbiciAPI {
 
-    private static final String API_URL = "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisidisponibilitat-valenbisi-dsiponibilidad/records?limit=20";
+    private static final String API_URL =
+            "https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/228/query"
+            + "?where=1%3D1"
+            + "&outFields=*"
+            + "&returnGeometry=true"
+            + "&f=json";
 
     public static void main(String[] args) {
-
-        if (API_URL.isEmpty()) {
-            System.err.println("La URL de la API no está especificada.");
-            return;
-        }
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 
             HttpGet request = new HttpGet(API_URL);
             HttpResponse response = httpClient.execute(request);
+
             HttpEntity entity = response.getEntity();
 
             if (entity != null) {
+
                 String result = EntityUtils.toString(entity);
-                System.out.println("Respuesta de la API:");
-                System.out.println(result);
 
-                try {
-                    JSONObject jsonObject = new JSONObject(result);
-                    JSONArray resultsArray = jsonObject.getJSONArray("results");
-      
-                    for (int i = 0; i < resultsArray.length(); i++) {
-                        JSONObject estacion = resultsArray.getJSONObject(i);
+                JSONObject jsonObject = new JSONObject(result);
+                JSONArray features = jsonObject.getJSONArray("features");
 
-                        String direccion = estacion.optString("address");
-                        int bicisDisponibles = estacion.optInt("available_bikes");
-                        int huecos = estacion.optInt("available_bike_stands");
+                System.out.println("Número de estaciones: " + features.length());
+                System.out.println();
 
-                        System.out.println("Estación: " + direccion);
-                        System.out.println("Bicis disponibles: " + bicisDisponibles);
-                        System.out.println("Huecos libres: " + huecos);
-                        System.out.println("-----------------------------");
+                for (int i = 0; i < features.length(); i++) {
+                    JSONObject feature = features.getJSONObject(i);
+
+                    JSONObject attributes = feature.getJSONObject("attributes");
+                    int number = attributes.optInt("number", 0);
+                    String address = attributes.optString("address", "Desconocida");
+                    int available = attributes.optInt("available", 0);
+                    int free = attributes.optInt("free", 0);
+                    int total = attributes.optInt("total", 0);
+
+                    Geometry geo = new Geometry();
+                    JSONObject geometry = feature.optJSONObject("geometry");
+                    if (geometry != null) {
+                        geo.x = geometry.optDouble("x", 0.0);
+                        geo.y = geometry.optDouble("y", 0.0);
                     }
 
-                } catch (org.json.JSONException e) {
-                    System.err.println("Error al procesar los datos JSON: " + e.getMessage());
+                    System.out.println("Estación: " + number + " - " + address);
+                    System.out.println("  -> Bicicletas Disponibles: " + available);
+                    System.out.println("  -> Anclajes Libres: " + free);
+                    System.out.println("  -> Capacidad Total: " + total);
+                    System.out.println("  -> Coordenadas: x=" + geo.x + ", y=" + geo.y);
+                    System.out.println("----------------------------------------");
                 }
             }
 
         } catch (IOException e) {
+            System.out.println("Error en la petición HTTP:");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("Error procesando JSON:");
             e.printStackTrace();
         }
     }
 }
-

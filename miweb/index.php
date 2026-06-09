@@ -5,56 +5,103 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Disponibilidad de ValenBisi</title>
 <style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background-color: #f9f9f9;
-}
-h1 {
-    text-align: center;
-    color: #333;
-}
-table {
-    width: 80%;
-    margin: 0 auto;
-    border-collapse: collapse;
-    background-color: #fff;
-}
-th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
-}
-th {
-    background-color: #4CAF50;
-    color: white;
-}
-tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
-tr:hover {
-    background-color: #ddd;
-}
+    :root {
+        --bg-color: #121212;
+        --text-color: #e0e0e0;
+        --card-bg: #1e1e1e;
+        --accent-color: #4CAF50;
+        --header-bg: #2d2d2d;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 40px 20px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #ffffff;
+        margin-bottom: 30px;
+        font-weight: 600;
+    }
+
+    table {
+        width: 95%;
+        max-width: 1200px;
+        margin: 0 auto;
+        border-collapse: separate;
+        border-spacing: 0;
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    th {
+        background-color: var(--accent-color);
+        color: #ffffff;
+        padding: 16px;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+    td {
+        padding: 14px;
+        border-bottom: 1px solid #333;
+        text-align: center;
+        font-size: 0.95rem;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: #2a2a2a;
+        transition: background 0.2s ease;
+    }
+
+    
+    p[style*='color'] {
+        font-weight: bold;
+        padding: 10px;
+        border-radius: 5px;
+    }
+	.btn-mapa {
+	    display: inline-block;
+	    width: 80%; 
+	    padding: 15px 0;
+	    background-color: #4CAF50; 
+	    color: white;
+	    text-align: center;
+	    text-decoration: none;
+	    font-size: 18px;
+	    font-weight: bold;
+	    border-radius: 5px;
+	    transition: background-color 0.3s;
+	}
+
+	.btn-mapa:hover {
+	    background-color: #4CAF50; 
+	}
 </style>
 </head>
 <body>
 <h1>Disponibilidad de ValenBisi</h1>
 <?php
-    // Pedimos directamente la geometría en WGS84 (EPSG:4326), que es el formato usado por la mayoría de mapas web:
-    // x = longitud, y = latitud.
+   
     $baseUrl = "https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/228/query?where=1=1&outFields=*&returnGeometry=true&outSR=4326&f=json";
 
-    /**
-     * Convierte coordenadas UTM ETRS89 / zona 30N (EPSG:25830) a WGS84 (EPSG:4326).
-     *
-     * La capa actual de ValenBisi trabaja en EPSG:25830. Aunque arriba solicitamos outSR=4326,
-     * mantenemos esta función como respaldo profesional por si la API devolviera de nuevo X/Y proyectadas.
-     *
-     * @return array{latitude: float, longitude: float}
-     */
+  
+      @return array{latitude: float, longitude: float}
+     
     function epsg25830ToWgs84(float $easting, float $northing): array
     {
-        // Parámetros GRS80 / ETRS89. Para este uso urbano, la diferencia práctica con WGS84 es despreciable.
+      
         $a = 6378137.0;
         $f = 1 / 298.257222101;
         $k0 = 0.9996;
@@ -111,19 +158,16 @@ tr:hover {
         ];
     }
 
-    /**
-     * Normaliza la geometría de ValenBisi para que el JSON siempre tenga latitude/longitude.
-     * Si la API devuelve EPSG:4326, usa x/y directamente. Si devuelve EPSG:25830, convierte desde UTM.
-     *
-     * @param array<string, mixed> $geometry
-     * @return array{latitude: float, longitude: float, source_x: float, source_y: float}
-     */
+   
+     @param array<string, mixed> $geometry
+     @return array{latitude: float, longitude: float, source_x: float, source_y: float}
+     
     function normalizeValenbisiGeometry(array $geometry): array
     {
         $x = isset($geometry['x']) ? (float)$geometry['x'] : 0.0;
         $y = isset($geometry['y']) ? (float)$geometry['y'] : 0.0;
 
-        // En EPSG:4326 Valencia estará aproximadamente en lon -0.x y lat 39.x.
+       
         $looksLikeLonLat = ($x >= -180 && $x <= 180 && $y >= -90 && $y <= 90);
 
         if ($looksLikeLonLat) {
@@ -185,10 +229,10 @@ tr:hover {
                  'free' => (int)$station['attributes']['free'],
                  'total' => (int)$station['attributes']['total'],
                  'updated_at' => $station['attributes']['updated_at'],
-                 // Coordenadas listas para pintar en mapas web: Leaflet, Google Maps, Mapbox, etc.
+                 
                  'latitude' => round($geometry['latitude'], 7),
                  'longitude' => round($geometry['longitude'], 7),
-                 // Mantengo las coordenadas originales por trazabilidad y depuración.
+                 
                  'lon' => $geometry['source_x'],
                  'lat' => $geometry['source_y']
              ];
@@ -196,11 +240,11 @@ tr:hover {
 			
 		} else {
 			echo "<p style='color: orange; text-align: center;'>No hay resultados en esta página o el formato de la respuesta es incorrecto.</p>";
-			var_dump($data); // Imprime $data para depuración
+			var_dump($data); 
 			die("<p>No hay resultados</p>");
 		}
 	
-	if (!$errorOccurred && !empty($allStations)) { // Usamos !empty() para verificar si $allStations tiene elementos
+	if (!$errorOccurred && !empty($allStations)) { 
 			$filePath = getcwd() . '/data.json';
 			if(file_put_contents($filePath, json_encode($allStations))){
 				echo "<p style='color: green; text-align: center;'>Datos guardados en: " . $filePath . "</p>";
@@ -228,6 +272,11 @@ tr:hover {
 			}
 	
 			echo "</table>";
+			
+			echo "<div style='text-align: center; margin-top: 20px;'>";
+			echo "    <a href='mapearbicis.php' class='btn-mapa'>Ver Mapa de Estaciones</a>";
+			echo "</div>";
+			
 	}
 ?>
 

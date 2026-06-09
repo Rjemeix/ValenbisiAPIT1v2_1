@@ -8,7 +8,6 @@ import java.sql.Statement;
 
 public class ClienteBD {
 
-    // Configuración de los parámetros de la base de datos en la nube
     private static final String AWSDNS = "databasedmp.crsb4droazot.us-east-1.rds.amazonaws.com";
     private static final String DBNAME = "starswars";
     private static final String PUERTO = "3306";

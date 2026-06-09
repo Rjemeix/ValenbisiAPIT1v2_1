@@ -17,7 +17,6 @@ public class ClienteBD {
 
     public static void main(String[] args) {
         
-        // Formamos la URL de conexión con el orden correcto (Servidor : Puerto / BaseDeDatos)
         String url = "jdbc:mysql://" + AWSDNS + ":" + PUERTO + "/" + DBNAME;
         
         Connection conexion = null;
@@ -27,40 +26,37 @@ public class ClienteBD {
         try {
             System.out.println("Intentando conectar con la base de datos en AWS...");
             
-            // 1. Establecer la conexión utilizando el Driver de MySQL
             conexion = DriverManager.getConnection(url, USERNAME, PASSWORD);
             System.out.println("¡Conexión establecida con éxito a la nube!");
 
-            // 2. Crear el objeto Statement para ejecutar la consulta SQL
             stmt = conexion.createStatement();
             
-            // 3. Consulta SQL adaptada fielmente a tu script (usando 'episode')
             String sql = "SELECT id, episode, title FROM films;";
             rs = stmt.executeQuery(sql);
 
-            System.out.println("\n--- LISTADO DE PELÍCULAS (STAR WARS) ---");
-            // 4. Recorrer el bache de resultados devuelto por la base de datos
+            System.out.println("\nLISTADO DE PELÍCULAS ");
+         
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String titulo = rs.getString("title");
-                // Recuperamos el campo exacto como String, ya que en tu SQL es un VARCHAR ("Episode I", etc.)
+            
                 String episodio = rs.getString("episode");
                 
-                System.out.println("ID: " + id + " | " + episodio + " | Título: " + titulo);
+                System.out.println("ID: " + id + " - " + episodio + " - Título: " + titulo);
             }
 
         } catch (SQLException e) {
-            System.err.println("Error detectado en la base de datos o en la conexión:");
+            System.err.println("Error detectado:");
             e.printStackTrace();
         } finally {
-            // 5. Cerrar siempre los recursos abiertos en el orden inverso para evitar fugas de memoria
+           
             try {
                 if (rs != null) rs.close();
                 if (stmt != null) stmt.close();
                 if (conexion != null) conexion.close();
-                System.out.println("\nRecursos cerrados correctamente.");
+                System.out.println("Recursos cerrados.");
             } catch (SQLException e) {
-                System.err.println("Error al intentar cerrar los recursos:");
+                System.err.println("Error al cerrar la conexion:");
                 e.printStackTrace();
             }
         }
